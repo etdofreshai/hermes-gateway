@@ -35,7 +35,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         xdotool \
         novnc \
         websockify \
-    && rm -rf /var/lib/apt/lists/* \
     && curl -fsSLO https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
     && apt-get install -y --no-install-recommends ./google-chrome-stable_current_amd64.deb \
     && rm -f google-chrome-stable_current_amd64.deb \
