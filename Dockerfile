@@ -46,9 +46,9 @@ RUN ln -sf /usr/local/lib/hermes-agent/venv/bin/hermes /root/.local/bin/hermes 2
 RUN hermes --version
 
 # ---------------------------------------------------------------------------
-# 4. Claude Code (optional — installed on first use or if token is present)
+# 4. Agent CLIs (Claude Code, Codex, opencode, pi) — installed on first boot
+#    via entrypoint.sh, since they land in /root which is volume-mounted.
 # ---------------------------------------------------------------------------
-RUN npm install -g @anthropic-ai/claude-code@latest 2>/dev/null || true
 
 # ---------------------------------------------------------------------------
 # 5. SSH server setup (so you can still SSH into the container)

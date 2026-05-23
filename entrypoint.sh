@@ -38,6 +38,37 @@ if [ ! -f /root/.hermes/config.yaml ]; then
     echo "[entrypoint] WARNING: No config.yaml found at /root/.hermes/config.yaml"
 fi
 
+# --- Agent CLI installs (claude, codex, opencode, pi) ---
+# These installers land in /root/.local/bin etc., which is volume-mounted,
+# so they have to run at runtime — not at image build time.
+# Re-run by deleting /root/.hermes/.cli-installed and restarting the container.
+mkdir -p /root/.hermes
+CLI_MARKER=/root/.hermes/.cli-installed
+if [ ! -f "$CLI_MARKER" ]; then
+    echo "[entrypoint] First-boot agent CLI install..."
+    : > "${CLI_MARKER}.log"
+
+    install_cli() {
+        local name=$1 url=$2 sh=$3
+        echo "[entrypoint] installing $name from $url"
+        if curl -fsSL "$url" | "$sh" >>"${CLI_MARKER}.log" 2>&1; then
+            echo "$name ok" >> "$CLI_MARKER"
+        else
+            echo "[entrypoint] WARN: $name install failed (see ${CLI_MARKER}.log)"
+            echo "$name FAILED" >> "$CLI_MARKER"
+        fi
+    }
+
+    install_cli claude   https://claude.ai/install.sh           bash
+    install_cli codex    https://chatgpt.com/codex/install.sh   sh
+    install_cli opencode https://opencode.ai/install            bash
+    install_cli pi       https://pi.dev/install.sh              sh
+
+    echo "[entrypoint] Agent CLI install complete (marker: $CLI_MARKER)"
+else
+    echo "[entrypoint] Agent CLIs already installed (marker present)"
+fi
+
 # --- Start Hermes Gateway ---
 echo "[entrypoint] Starting Hermes gateway..."
 echo "[entrypoint] Version: $(hermes --version 2>&1 || echo 'unknown')"
