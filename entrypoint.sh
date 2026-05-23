@@ -62,7 +62,16 @@ if [ ! -f "$CLI_MARKER" ]; then
     install_cli claude   https://claude.ai/install.sh           bash
     install_cli codex    https://chatgpt.com/codex/install.sh   sh
     install_cli opencode https://opencode.ai/install            bash
-    install_cli pi       https://pi.dev/install.sh              sh
+
+    # pi: skip the fancy pi.dev installer (TTY-fussy) and install via npm
+    # directly — it's just a globally-installed npm package.
+    echo "[entrypoint] installing pi via npm"
+    if npm install -g @earendil-works/pi-coding-agent >>"${CLI_MARKER}.log" 2>&1; then
+        echo "pi ok" >> "$CLI_MARKER"
+    else
+        echo "[entrypoint] WARN: pi install failed (see ${CLI_MARKER}.log)"
+        echo "pi FAILED" >> "$CLI_MARKER"
+    fi
 
     echo "[entrypoint] Agent CLI install complete (marker: $CLI_MARKER)"
 else
@@ -89,6 +98,20 @@ for cli in claude codex opencode pi; do
         fi
     fi
 done
+
+# --- Hermes install/update on every boot ---
+# Image baked in a version at build time, but main moves fast. Try `hermes
+# update` first (cheap no-op if current); if hermes isn't on PATH at all, run
+# the full installer. Both are non-fatal — gateway still starts on failure.
+if command -v hermes >/dev/null 2>&1; then
+    echo "[entrypoint] Running 'hermes update'..."
+    hermes update || echo "[entrypoint] WARN: hermes update failed (continuing)"
+else
+    echo "[entrypoint] hermes not on PATH; running installer..."
+    curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh \
+        | bash -s -- --skip-setup --skip-browser \
+        || echo "[entrypoint] WARN: hermes install failed (continuing)"
+fi
 
 # --- Start Hermes Gateway ---
 echo "[entrypoint] Starting Hermes gateway..."

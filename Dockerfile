@@ -5,7 +5,7 @@ FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV HERMES_HOME=/root/.hermes
-ENV PATH="/root/.local/bin:/usr/local/lib/hermes-agent/venv/bin:/usr/local/bin:/usr/bin:/bin"
+ENV PATH="/root/.local/bin:/root/.opencode/bin:/root/.pi/bin:/usr/local/lib/hermes-agent/venv/bin:/usr/local/bin:/usr/bin:/bin"
 
 # ---------------------------------------------------------------------------
 # 1. System dependencies
