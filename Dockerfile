@@ -29,8 +29,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # ---------------------------------------------------------------------------
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get install -y nodejs \
-    && npm install -g npm@latest \
     && rm -rf /var/lib/apt/lists/*
+# npm ships with nodejs; skip self-upgrade (nodesource bundle can be incomplete)
 
 # ---------------------------------------------------------------------------
 # 3. Hermes Agent
