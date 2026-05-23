@@ -25,7 +25,27 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # ---------------------------------------------------------------------------
-# 2. Node.js (for MCP servers like Context7, Claude Code, etc.)
+# 2. Chrome + VNC (headless browser with optional remote desktop access)
+# ---------------------------------------------------------------------------
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        Xvfb \
+        openbox \
+        wmctrl \
+        x11vnc \
+        xdotool \
+        novnc \
+        websockify \
+    && rm -rf /var/lib/apt/lists/* \
+    && curl -fsSLO https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
+    && apt-get install -y --no-install-recommends ./google-chrome-stable_current_amd64.deb \
+    && rm -f google-chrome-stable_current_amd64.deb \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY chrome-cdp /root/bin/chrome-cdp
+RUN chmod +x /root/bin/chrome-cdp
+
+# ---------------------------------------------------------------------------
+# 3. Node.js (for MCP servers like Context7, Claude Code, etc.)
 # ---------------------------------------------------------------------------
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get install -y nodejs \
@@ -33,7 +53,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
 # npm ships with nodejs; skip self-upgrade (nodesource bundle can be incomplete)
 
 # ---------------------------------------------------------------------------
-# 3. Hermes Agent
+# 4. Hermes Agent
 # ---------------------------------------------------------------------------
 # Primary: curl installer (tracks main, installs with --extra all so telegram,
 # slack, etc. are present). Falls back to PyPI with [all] extras if curl path
@@ -48,24 +68,25 @@ RUN ln -sf /usr/local/lib/hermes-agent/venv/bin/hermes /root/.local/bin/hermes 2
 RUN hermes --version
 
 # ---------------------------------------------------------------------------
-# 4. Agent CLIs (Claude Code, Codex, opencode, pi) — installed on first boot
+# 5. Agent CLIs (Claude Code, Codex, opencode, pi) — installed on first boot
 #    via entrypoint.sh, since they land in /root which is volume-mounted.
 # ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
-# 5. SSH server setup (so you can still SSH into the container)
+# 6. SSH server setup (so you can still SSH into the container)
 # ---------------------------------------------------------------------------
 RUN mkdir -p /run/sshd
 # SSH_AUTHORIZED_KEYS env var is set via Dokploy; entrypoint writes it.
 
 # ---------------------------------------------------------------------------
-# 6. Runtime directories
+# 7. Runtime directories
 # ---------------------------------------------------------------------------
 RUN mkdir -p /root/.hermes/logs /root/.hermes/sessions /root/.hermes/memories \
-    /root/.hermes/skills /root/.hermes/sounds /root/workspace
+    /root/.hermes/skills /root/.hermes/sounds /root/workspace \
+    /root/.chrome-cdp /root/.hermes/run/remote-browser /root/.hermes/logs/remote-browser
 
 # ---------------------------------------------------------------------------
-# 7. Entrypoint
+# 8. Entrypoint
 # ---------------------------------------------------------------------------
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

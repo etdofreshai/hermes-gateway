@@ -113,6 +113,80 @@ else
         || echo "[entrypoint] WARN: hermes install failed (continuing)"
 fi
 
+# --- Browser + VNC setup (optional remote desktop) ---
+# Set BROWSER_ENABLED=1 to start Xvfb, Chrome (CDP), x11vnc, and noVNC
+# alongside the gateway. Access via SSH tunnel:
+#   ssh -L 6080:127.0.0.1:6080 -L 9222:127.0.0.1:9222 <host>
+#   open http://127.0.0.1:6080/vnc.html?autoconnect=1&resize=scale
+BROWSER_ENABLED="${BROWSER_ENABLED:-false}"
+if [ "$BROWSER_ENABLED" = "true" ] || [ "$BROWSER_ENABLED" = "1" ]; then
+    echo "[entrypoint] Starting browser + VNC stack..."
+
+    DISPLAY_NUM="${BROWSER_DISPLAY:-99}"
+    DISPLAY_VAL=":${DISPLAY_NUM}"
+    BROWSER_LOG="/root/.hermes/logs/remote-browser"
+    BROWSER_RUN="/root/.hermes/run/remote-browser"
+    CDP_PORT="${CHROME_CDP_PORT:-9222}"
+    VNC_PORT="${BROWSER_VNC_PORT:-5900}"
+    NOVNC_PORT="${BROWSER_NOVNC_PORT:-6080}"
+    CHROME_WIDTH="${BROWSER_WIDTH:-1280}"
+    CHROME_HEIGHT="${BROWSER_HEIGHT:-900}"
+    CHROME_HEADLESS="${CHROME_HEADLESS:-new}"
+
+    mkdir -p "$BROWSER_LOG" "$BROWSER_RUN" "${CHROME_USER_DATA:-/root/.chrome-cdp}"
+
+    # Clean stale display lock
+    if [ -e "/tmp/.X${DISPLAY_NUM}-lock" ] && ! pgrep -f "Xvfb ${DISPLAY_VAL}" >/dev/null; then
+        rm -f "/tmp/.X${DISPLAY_NUM}-lock"
+    fi
+
+    # Xvfb
+    if ! pgrep -f "Xvfb ${DISPLAY_VAL}" >/dev/null; then
+        Xvfb "$DISPLAY_VAL" -screen 0 "${CHROME_WIDTH}x${CHROME_HEIGHT}x24" -nolisten tcp \
+            >"$BROWSER_LOG/xvfb.log" 2>&1 &
+        echo $! > "$BROWSER_RUN/xvfb.pid"
+        echo "[entrypoint]   Xvfb started on $DISPLAY_VAL (${CHROME_WIDTH}x${CHROME_HEIGHT})"
+    fi
+    sleep 1
+
+    # Openbox window manager
+    DISPLAY="$DISPLAY_VAL" openbox >"$BROWSER_LOG/openbox.log" 2>&1 &
+    echo $! > "$BROWSER_RUN/openbox.pid"
+    sleep 1
+
+    # Chrome with CDP
+    DISPLAY="$DISPLAY_VAL" /root/bin/chrome-cdp about:blank \
+        >"$BROWSER_LOG/chrome.log" 2>&1 &
+    echo $! > "$BROWSER_RUN/chrome.pid"
+    echo "[entrypoint]   Chrome started (CDP port $CDP_PORT)"
+    sleep 2
+
+    # Verify CDP
+    if curl -fsS --max-time 5 "http://127.0.0.1:${CDP_PORT}/json/version" >/dev/null 2>&1; then
+        echo "[entrypoint]   CDP verified on port $CDP_PORT"
+    else
+        echo "[entrypoint]   WARN: CDP not responding on port $CDP_PORT (may need a moment)"
+    fi
+
+    # x11vnc (localhost only, no password — rely on SSH tunnel for auth)
+    x11vnc -display "$DISPLAY_VAL" -localhost -forever -shared \
+        -rfbport "$VNC_PORT" -nopw >"$BROWSER_LOG/x11vnc.log" 2>&1 &
+    echo $! > "$BROWSER_RUN/x11vnc.pid"
+    echo "[entrypoint]   x11vnc started on port $VNC_PORT (localhost only)"
+    sleep 1
+
+    # noVNC / websockify (localhost only)
+    websockify --web="/usr/share/novnc/" "127.0.0.1:${NOVNC_PORT}" "127.0.0.1:${VNC_PORT}" \
+        >"$BROWSER_LOG/websockify.log" 2>&1 &
+    echo $! > "$BROWSER_RUN/websockify.pid"
+    echo "[entrypoint]   noVNC started on port $NOVNC_PORT (localhost only)"
+    echo "[entrypoint] Browser + VNC stack ready."
+    echo "[entrypoint]   Connect: ssh -L ${NOVNC_PORT}:127.0.0.1:${NOVNC_PORT} -L ${CDP_PORT}:127.0.0.1:${CDP_PORT} <host>"
+    echo "[entrypoint]   Open:    http://127.0.0.1:${NOVNC_PORT}/vnc.html?autoconnect=1&resize=scale"
+else
+    echo "[entrypoint] Browser + VNC disabled (set BROWSER_ENABLED=1 to enable)"
+fi
+
 # --- Start Hermes Gateway ---
 echo "[entrypoint] Starting Hermes gateway..."
 echo "[entrypoint] Version: $(hermes --version 2>&1 || echo 'unknown')"
