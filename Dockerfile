@@ -28,7 +28,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # 2. Chrome + VNC (headless browser with optional remote desktop access)
 # ---------------------------------------------------------------------------
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        Xvfb \
+        xvfb \
         openbox \
         wmctrl \
         x11vnc \
