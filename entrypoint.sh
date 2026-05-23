@@ -69,6 +69,27 @@ else
     echo "[entrypoint] Agent CLIs already installed (marker present)"
 fi
 
+# --- Validate agent CLIs (presence + likely install dir) ---
+echo "[entrypoint] Validating agent CLIs..."
+for cli in claude codex opencode pi; do
+    if path=$(command -v "$cli" 2>/dev/null); then
+        echo "[entrypoint]   $cli: $path"
+    else
+        found=""
+        for dir in /root/.local/bin /root/.codex/bin /root/.opencode/bin /root/.pi/bin /root/.bun/bin /usr/local/bin; do
+            if [ -x "$dir/$cli" ]; then
+                found="$dir/$cli"
+                break
+            fi
+        done
+        if [ -n "$found" ]; then
+            echo "[entrypoint]   $cli: $found (NOT on PATH)"
+        else
+            echo "[entrypoint]   $cli: NOT FOUND"
+        fi
+    fi
+done
+
 # --- Start Hermes Gateway ---
 echo "[entrypoint] Starting Hermes gateway..."
 echo "[entrypoint] Version: $(hermes --version 2>&1 || echo 'unknown')"

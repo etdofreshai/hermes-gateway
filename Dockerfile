@@ -35,11 +35,13 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
 # ---------------------------------------------------------------------------
 # 3. Hermes Agent
 # ---------------------------------------------------------------------------
-ARG HERMES_VERSION=latest
-RUN pip3 install --break-system-packages hermes-agent==${HERMES_VERSION} 2>/dev/null \
-    || pip3 install --break-system-packages hermes-agent \
-    || { echo "pip install failed, trying curl installer"; \
-         curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash; }
+# Primary: curl installer (tracks main, installs with --extra all so telegram,
+# slack, etc. are present). Falls back to PyPI with [all] extras if curl path
+# fails. --skip-setup avoids the interactive post-install wizard; --skip-browser
+# skips playwright/chromium since this image is headless.
+RUN curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh \
+        | bash -s -- --skip-setup --skip-browser \
+    || pip3 install --break-system-packages 'hermes-agent[all]'
 
 # Ensure the CLI is on PATH
 RUN ln -sf /usr/local/lib/hermes-agent/venv/bin/hermes /root/.local/bin/hermes 2>/dev/null || true
