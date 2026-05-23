@@ -68,8 +68,4 @@ RUN mkdir -p /root/.hermes/logs /root/.hermes/sessions /root/.hermes/memories \
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-EXPOSE 22 9119
-
-VOLUME ["/root/.hermes", "/root/workspace"]
-
 ENTRYPOINT ["/entrypoint.sh"]
