@@ -43,6 +43,13 @@ FAL_API_KEY=...
 # Optional services
 STT_OPENAI_BASE_URL=...
 VOICE_TOOLS_OPENAI_KEY=...
+
+# Browser + VNC (optional remote desktop + headless Chrome)
+BROWSER_ENABLED=1
+CHROME_CDP_PORT=9222
+BROWSER_NOVNC_PORT=6080
+BROWSER_WIDTH=1280
+BROWSER_HEIGHT=900
 ```
 
 ### Volume structure
@@ -65,3 +72,6 @@ The persistent volume at `/root/.hermes` contains:
 - **Gateway restart:** The gateway auto-restarts because it's PID 1. If it crashes, Docker restarts the container (set restart policy to `always` or `unless-stopped`).
 - **Config changes:** Edit `/root/.hermes/config.yaml` via SSH, then `kill -TERM 1` to restart the gateway cleanly.
 - **Domain:** The domain (e.g. `hermes.etdofresh.com`) can point to port `9119` for the dashboard, but the gateway itself only needs outbound internet for Telegram polling.
+- **Browser CDP spam:** When `BROWSER_ENABLED` is not set, the entrypoint clears `browser.cdp_url` in config to suppress "Failed to resolve CDP endpoint" warnings. If you enable the browser, the CDP URL is left intact.
+- **Agent CLIs:** Claude Code, Codex, opencode, and pi are installed on first boot (not at image build time) since `/root` is volume-mounted. Re-run by deleting `/root/.hermes/.cli-installed` and restarting.
+- **pi CLI:** If the npm install fails (native deps), the entrypoint retries with `--ignore-scripts` as a fallback.

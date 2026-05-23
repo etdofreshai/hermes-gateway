@@ -71,6 +71,14 @@ if [ ! -f "$CLI_MARKER" ]; then
     else
         echo "[entrypoint] WARN: pi install failed (see ${CLI_MARKER}.log)"
         echo "pi FAILED" >> "$CLI_MARKER"
+        echo "[entrypoint] Retrying pi with --ignore-scripts..."
+        if npm install -g --ignore-scripts @earendil-works/pi-coding-agent >>"${CLI_MARKER}.log" 2>&1; then
+            # Overwrite FAILED with ok
+            sed -i 's/pi FAILED/pi ok/' "$CLI_MARKER"
+            echo "[entrypoint] pi installed (with --ignore-scripts)"
+        else
+            echo "[entrypoint] WARN: pi install also failed with --ignore-scripts"
+        fi
     fi
 
     echo "[entrypoint] Agent CLI install complete (marker: $CLI_MARKER)"
@@ -118,7 +126,7 @@ fi
 # alongside the gateway. Access via SSH tunnel:
 #   ssh -L 6080:127.0.0.1:6080 -L 9222:127.0.0.1:9222 <host>
 #   open http://127.0.0.1:6080/vnc.html?autoconnect=1&resize=scale
-BROWSER_ENABLED="${BROWSER_ENABLED:-false}"
+BROWSER_ENABLED="${BROWSER_ENABLED:-}"
 if [ "$BROWSER_ENABLED" = "true" ] || [ "$BROWSER_ENABLED" = "1" ]; then
     echo "[entrypoint] Starting browser + VNC stack..."
 
@@ -185,6 +193,18 @@ if [ "$BROWSER_ENABLED" = "true" ] || [ "$BROWSER_ENABLED" = "1" ]; then
     echo "[entrypoint]   Open:    http://127.0.0.1:${NOVNC_PORT}/vnc.html?autoconnect=1&resize=scale"
 else
     echo "[entrypoint] Browser + VNC disabled (set BROWSER_ENABLED=1 to enable)"
+fi
+
+# --- Browser tool CDP config ---
+# When browser is disabled, clear the browser.cdp_url in config so the browser
+# tool does not spam "Failed to resolve CDP endpoint" warnings on startup.
+if [ "$BROWSER_ENABLED" != "true" ] && [ "$BROWSER_ENABLED" != "1" ]; then
+    if [ -f /root/.hermes/config.yaml ]; then
+        if grep -q 'cdp_url:' /root/.hermes/config.yaml; then
+            sed -i 's/^\(\s*cdp_url:\s*\).*/\1/' /root/.hermes/config.yaml
+            echo "[entrypoint] Cleared browser.cdp_url (browser disabled)"
+        fi
+    fi
 fi
 
 # --- Start Hermes Gateway ---
