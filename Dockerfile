@@ -22,6 +22,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         ripgrep \
         rsync \
         sudo \
+        tmux \
     && rm -rf /var/lib/apt/lists/*
 
 # ---------------------------------------------------------------------------
