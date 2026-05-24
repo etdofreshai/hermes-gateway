@@ -68,6 +68,12 @@ RUN ln -sf /usr/local/lib/hermes-agent/venv/bin/hermes /root/.local/bin/hermes 2
 RUN hermes --version
 
 # ---------------------------------------------------------------------------
+# 4b. Extra Python packages needed by skills/scripts
+# ---------------------------------------------------------------------------
+# Pillow: required by telegram-group-icon skill's set_telegram_group_photo.py
+RUN /usr/local/lib/hermes-agent/venv/bin/python3 -m pip install --no-cache-dir Pillow
+
+# ---------------------------------------------------------------------------
 # 5. Agent CLIs (Claude Code, Codex, opencode, pi) — installed on first boot
 #    via entrypoint.sh, since they land in /root which is volume-mounted.
 # ---------------------------------------------------------------------------
