@@ -71,8 +71,7 @@ RUN hermes --version
 # 4b. Extra Python packages needed by skills/scripts
 # ---------------------------------------------------------------------------
 # Pillow: required by telegram-group-icon skill's set_telegram_group_photo.py
-RUN /usr/local/lib/hermes-agent/venv/bin/python3 -m ensurepip --upgrade \
-    && /usr/local/lib/hermes-agent/venv/bin/python3 -m pip install --no-cache-dir Pillow
+RUN /usr/local/lib/hermes-agent/venv/bin/python3 -m uv pip install --no-cache-dir Pillow faster-whisper
 
 # ---------------------------------------------------------------------------
 # 5. Agent CLIs (Claude Code, Codex, opencode, pi) — installed on first boot
