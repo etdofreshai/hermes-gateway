@@ -103,11 +103,9 @@ def main() -> int:
             chat = msg.chat
             title = getattr(chat, "title", None) or str(getattr(chat, "id", "this group"))
             event = self._build_message_event(msg, MessageType.TEXT, update_id=update_id)
-            bot_id = str(getattr(self._bot, "id", "telegram-bot") or "telegram-bot")
-            bot_name = getattr(self._bot, "username", None) or "Hermes Telegram bot"
-            event.source.user_id = bot_id
-            event.source.user_name = bot_name
-            event.source.is_bot = True
+            # Preserve the original human actor from Telegram's service message.
+            # Overwriting source.user_id with the bot id makes gateway auth reject
+            # the synthetic workflow unless the bot itself is allowlisted.
             event.auto_skill = "telegram-group-icon"
             event.text = (
                 f"A Telegram group named {title!r} was just created or Hermes was just added.\n\n"
