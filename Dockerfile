@@ -72,10 +72,11 @@ RUN hermes --version
 # 4b. Extra Python packages needed by skills/scripts
 # ---------------------------------------------------------------------------
 # Pillow: required by telegram-group-icon skill's set_telegram_group_photo.py
-# faster-whisper: required for local Telegram voice transcription.
+# Voice transcription is handled by the Dokploy STT service, so this image does
+# not install local faster-whisper/CTranslate2 CUDA dependencies.
 # Uses system `uv` to install into the Hermes venv (no pip in venv on v0.14.0+).
 RUN uv pip install --python /usr/local/lib/hermes-agent/venv/bin/python3 \
-        --no-cache-dir Pillow faster-whisper
+        --no-cache-dir Pillow
 
 # ---------------------------------------------------------------------------
 # 5. Agent CLIs (Claude Code, Codex, opencode, pi) — installed on first boot
