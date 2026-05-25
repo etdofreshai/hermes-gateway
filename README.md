@@ -91,5 +91,6 @@ Current patches:
 | Patch | Description |
 |-------|-------------|
 | `01-telegram-voice-echo.py` | Sends an immediate 🎤 transcript bubble to Telegram when a voice message is transcribed, before the agent processes it |
+| `02-telegram-auto-group-photo.py` | Registers Telegram status-update handling and auto-runs `telegram-group-icon` when Hermes is added to a group or included during group creation |
 
 To add a new patch: create `patches/NN-description.py` that accepts the Hermes source dir as `sys.argv[1]` and modifies files in place. The `apply-patches.sh` script runs all `*.py` files from `/patches/` alphabetically.
