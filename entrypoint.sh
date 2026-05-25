@@ -21,11 +21,16 @@ if [ -n "${SSH_AUTHORIZED_KEYS:-}" ]; then
     echo "[entrypoint] SSH authorized_keys configured"
 fi
 
-# Start sshd in background if the binary exists
-if command -v sshd &>/dev/null; then
-    /usr/sbin/sshd -D -e &
+# Start sshd in background if the binary exists. openssh-server installs it
+# under /usr/sbin, which is not always on PATH in minimal/container envs.
+SSHD_BIN="${SSHD_BIN:-/usr/sbin/sshd}"
+if [ -x "$SSHD_BIN" ] || SSHD_BIN="$(command -v sshd 2>/dev/null)"; then
+    mkdir -p /run/sshd
+    "$SSHD_BIN" -D -e &
     SSHD_PID=$!
     echo "[entrypoint] SSH server started (PID $SSHD_PID)"
+else
+    echo "[entrypoint] WARN: sshd not found; SSH access disabled"
 fi
 
 # --- First-boot check ---
