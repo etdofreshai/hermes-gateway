@@ -96,8 +96,13 @@ RUN mkdir -p /root/.hermes/logs /root/.hermes/sessions /root/.hermes/memories \
     /root/.chrome-cdp /root/.hermes/run/remote-browser /root/.hermes/logs/remote-browser
 
 # ---------------------------------------------------------------------------
-# 8. Entrypoint
+# 8. Runtime patches + entrypoint
 # ---------------------------------------------------------------------------
+# Patches survive hermes updates — applied at boot after `hermes update`.
+COPY patches/ /patches/
+COPY apply-patches.sh /apply-patches.sh
+RUN chmod +x /apply-patches.sh
+
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 

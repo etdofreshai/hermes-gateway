@@ -75,3 +75,21 @@ The persistent volume at `/root/.hermes` contains:
 - **Browser CDP spam:** When `BROWSER_ENABLED` is not set, the entrypoint clears `browser.cdp_url` in config to suppress "Failed to resolve CDP endpoint" warnings. If you enable the browser, the CDP URL is left intact.
 - **Agent CLIs:** Claude Code, Codex, opencode, and pi are installed on first boot (not at image build time) since `/root` is volume-mounted. Re-run by deleting `/root/.hermes/.cli-installed` and restarting.
 - **pi CLI:** If the npm install fails (native deps), the entrypoint retries with `--ignore-scripts` as a fallback.
+
+## Runtime patches
+
+The `patches/` directory contains Python scripts that modify the Hermes agent source at boot, **after** `hermes update` runs. This lets us customize behavior without losing changes on agent upgrades.
+
+Each patch is a numbered `.py` script that:
+1. Reads the target file from the Hermes source
+2. Finds unique anchor strings
+3. Applies in-place text modifications
+4. Is idempotent (safe to re-run)
+
+Current patches:
+
+| Patch | Description |
+|-------|-------------|
+| `01-telegram-voice-echo.py` | Sends an immediate 🎤 transcript bubble to Telegram when a voice message is transcribed, before the agent processes it |
+
+To add a new patch: create `patches/NN-description.py` that accepts the Hermes source dir as `sys.argv[1]` and modifies files in place. The `apply-patches.sh` script runs all `*.py` files from `/patches/` alphabetically.

@@ -121,6 +121,13 @@ else
         || echo "[entrypoint] WARN: hermes install failed (continuing)"
 fi
 
+# --- Apply runtime patches ---
+# Patches are baked into the image at /patches/ and applied AFTER hermes update
+# so they survive agent upgrades. See apply-patches.sh for details.
+if [ -x /apply-patches.sh ]; then
+    /apply-patches.sh
+fi
+
 # --- Browser + VNC setup (optional remote desktop) ---
 # Set BROWSER_ENABLED=1 to start Xvfb, Chrome (CDP), x11vnc, and noVNC
 # alongside the gateway. Access via SSH tunnel:
