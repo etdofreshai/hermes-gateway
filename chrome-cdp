@@ -12,6 +12,15 @@ set -euo pipefail
 CDP_PORT="${CHROME_CDP_PORT:-9222}"
 USER_DATA="${CHROME_USER_DATA:-/root/.chrome-cdp}"
 
+# Persistent Chrome profiles keep Singleton* lock files. After a container
+# rebuild/restart those locks can point at a dead PID/old hostname and Chrome
+# refuses to start. If no Chrome process is currently using this profile, clear
+# stale locks before launch.
+mkdir -p "$USER_DATA"
+if ! pgrep -f "google-chrome.*--user-data-dir=$USER_DATA" >/dev/null 2>&1; then
+    rm -f "$USER_DATA/SingletonLock" "$USER_DATA/SingletonSocket" "$USER_DATA/SingletonCookie"
+fi
+
 exec google-chrome-stable \
     --remote-debugging-port="$CDP_PORT" \
     --remote-debugging-address=127.0.0.1 \
