@@ -129,7 +129,7 @@ def main():
                                 if _echo_adapter:
                                     await _echo_adapter.send(
                                         source.chat_id,
-                                        "\\xf0\\x9f\\x8e\\xa4 " + transcript,
+                                        "🎤 " + transcript,
                                         metadata=_echo_meta,
                                     )
                         except Exception as _echo_err:
