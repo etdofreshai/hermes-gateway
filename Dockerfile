@@ -74,8 +74,10 @@ RUN hermes --version
 # Pillow: required by telegram-group-icon skill's set_telegram_group_photo.py
 # Voice transcription is handled by the Dokploy STT service, so this image does
 # not install local faster-whisper/CTranslate2 CUDA dependencies.
-# Uses system `uv` to install into the Hermes venv (no pip in venv on v0.14.0+).
-RUN uv pip install --python /usr/local/lib/hermes-agent/venv/bin/python3 \
+# Bootstrap uv explicitly; the Hermes installer no longer guarantees a system `uv` binary.
+# Use uv to install into the Hermes venv (no pip in venv on v0.14.0+).
+RUN python3 -m pip install --break-system-packages --no-cache-dir uv \
+    && uv pip install --python /usr/local/lib/hermes-agent/venv/bin/python3 \
         --no-cache-dir Pillow
 
 # ---------------------------------------------------------------------------
