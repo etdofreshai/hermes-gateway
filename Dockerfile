@@ -76,7 +76,7 @@ RUN hermes --version
 # not install local faster-whisper/CTranslate2 CUDA dependencies.
 # Bootstrap uv explicitly; the Hermes installer no longer guarantees a system `uv` binary.
 # Use uv to install into the Hermes venv (no pip in venv on v0.14.0+).
-RUN python3 -m pip install --break-system-packages --no-cache-dir uv \
+RUN /usr/bin/python3 -m pip install --break-system-packages --no-cache-dir uv \
     && uv pip install --python /usr/local/lib/hermes-agent/venv/bin/python3 \
         --no-cache-dir Pillow
 
